@@ -3,12 +3,6 @@
     <Tool>
         <Name>linker</Name>
         <Parent>
-            <Path>E:\Microcontroller\stm32\F407_FSMC_2\EWARM\F407_FSMC_2\Exe\F407_FSMC_2.out</Path>
-            <Output>
-                <Path>E:\Microcontroller\stm32\F407_FSMC_2\EWARM\F407_FSMC_2\List\F407_FSMC_2.map</Path>
-            </Output>
-        </Parent>
-        <Parent>
             <Path>E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\F407_FSMC_2\Exe\F407_FSMC_2.out</Path>
             <Output>
                 <Path>E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\F407_FSMC_2\List\F407_FSMC_2.map</Path>

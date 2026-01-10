@@ -36,6 +36,7 @@ void delayms(uint32_t t);
 void write_com(uint32_t com);
 void write_data(uint32_t data);
 void Data_processing(uint8_t temp);
+void Data_processing_enh(const uint8_t *pic);
 void adj_Contrast(uint8_t Contrast_level);
 void display_Contrast_level(uint8_t number);
 void Write_number(uint8_t x, uint8_t y, const uint8_t *n, uint8_t k);
@@ -43,8 +44,9 @@ void display_address(void);
 void display_gray(void);
 
 void disppic(const uint8_t *pic);
-
-
+void disppic_enh(const uint8_t *pic);
+void Set_window(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
+void display_start_window(uint8_t x, uint8_t y);
 
 
 

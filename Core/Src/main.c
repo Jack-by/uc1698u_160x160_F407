@@ -54,7 +54,7 @@
    extern uint8_t const pic_data1[];
    extern uint8_t const pic_data2[];
    extern uint8_t const pic_data3[];
-
+   extern const uint8_t img159x160[];
     
     
 /* USER CODE END PV */
@@ -121,15 +121,35 @@ int main(void)
     
      display_white();
     HAL_Delay(DALAY_TIME);
-    adj_Contrast (200 );
-    HAL_Delay(DALAY_TIME);
+//    adj_Contrast (200 );
+//    HAL_Delay(DALAY_TIME);
     
     
 //    display_gray( );
 //    HAL_Delay(3000);
     
+//    Data_processing(0xFF);
+//    Data_processing(0x00);
+//    Data_processing(0xFF);
     
+  write_com(0x81);			//electronic potentionmeter
+  write_com(220);
     
+    Set_window(5, 5, 127, 127);
+    display_start_window(6, 6);
+//    display_address();
+    disppic_enh(img159x160);
+    
+     write_com(0xa7);
+    
+//    write_data(d2);
+//    write_data(d3);
+//    write_data(d4);
+
+    
+   
+//     write_data(0xFF);
+    while(1);
     
   /* USER CODE END 2 */
 

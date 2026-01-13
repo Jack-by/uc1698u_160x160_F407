@@ -49,9 +49,9 @@
 */
 #include "u8x8.h"
 
-#define GRAY_SCALE    
+//#define GRAY_SCALE    
     
-#define COLOR_64K    
+//#define COLOR_64K    
 
 
 
@@ -64,7 +64,7 @@ static const uint8_t u8x8_d_uc1611s_powersave0_seq[] = {
 #ifdef GRAY_SCALE  
   U8X8_C(0x0af),   //grayscale mode		        /* display on, UC1698s */
 #else
-//  U8X8_C(0x0ad), //on/off mode		                /* display on, UC1698s */
+  U8X8_C(0x0ad), //on/off mode		                /* display on, UC1698s */
 #endif  
   
 /**************************************************************************************************************************************************************/  
@@ -104,6 +104,38 @@ static const uint8_t u8x8_d_uc1611s_flip1_seq[] = {
   U8X8_END()             			/* end of sequence */
 };
 
+
+static void Data_processing_uc1698(uint8_t in_bw, uint8_t* out4k)  //turns 1byte B/W data to 4k-color data(RRRR-GGGG-BBBB)   
+{
+uint8_t temp1,temp2,temp3,temp4,temp5,temp6,temp7,temp8;
+uint8_t h11,h12,h13,h14,h15,h16,h17,h18,d1,d2,d3,d4;
+
+		temp1=(in_bw&0x80)>>0;
+		temp2=(in_bw&0x40)>>3;
+		temp3=(in_bw&0x20)<<2;
+		temp4=(in_bw&0x10)>>1;
+		temp5=(in_bw&0x08)<<4;
+		temp6=(in_bw&0x04)<<1;
+		temp7=(in_bw&0x02)<<6;
+		temp8=(in_bw&0x01)<<3;
+		h11=temp1|temp1>>1|temp1>>2|temp1>>3;
+		h12=temp2|temp2>>1|temp2>>2|temp2>>3;
+		h13=temp3|temp3>>1|temp3>>2|temp3>>3;
+		h14=temp4|temp4>>1|temp4>>2|temp4>>3;
+		h15=temp5|temp5>>1|temp5>>2|temp5>>3;
+		h16=temp6|temp6>>1|temp6>>2|temp6>>3;
+		h17=temp7|temp7>>1|temp7>>2|temp7>>3;
+		h18=temp8|temp8>>1|temp8>>2|temp8>>3;
+		out4k[0]=h11|h12;
+		out4k[1]=h13|h14;
+		out4k[2]=h15|h16;
+		out4k[3]=h17|h18;               
+}
+
+
+
+
+
 uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
   uint8_t x, y, c;
@@ -129,7 +161,15 @@ uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *a
       ptr = ((u8x8_tile_t *)arg_ptr)->tile_ptr;
       do
       {
-	u8x8_cad_SendData(u8x8, c, ptr);	/* note: SendData can not handle more than 255 bytes */
+        uint8_t arr_4k[4];
+        
+	for (uint16_t i=0; i<c; i++)
+        {
+          Data_processing_uc1698(*ptr, arr_4k);
+          u8x8_cad_SendData(u8x8, 4, arr_4k);	/* note: SendData can not handle more than 255 bytes */ 
+          ptr++;
+        }
+        
 	arg_int--;
       } while( arg_int > 0 );
       

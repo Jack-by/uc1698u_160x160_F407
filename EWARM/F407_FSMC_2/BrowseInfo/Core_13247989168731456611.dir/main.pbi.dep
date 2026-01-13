@@ -1,4 +1,15 @@
 E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\F407_FSMC_2\BrowseInfo\Core_13247989168731456611.dir\main.pbi: \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\DLib_float_setup.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\ycheck.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\math.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\DLib_Product_stdlib.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\stdlib.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\stdio.h \
+  E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\u8g2\u8g_arm.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\limits.h \
+  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\stdarg.h \
+  E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\u8g2\u8x8.h \
+  E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\u8g2\u8g2.h \
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\uc1698u\uc1698u.h \
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Core\Inc\fsmc.h \
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Core\Inc\gpio.h \
@@ -27,7 +38,6 @@ E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\F407_FSMC_2\BrowseInfo\Core_
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_gpio_ex.h \
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_gpio.h \
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc_ex.h \
-  C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\ycheck.h \
   C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\ysizet.h \
   C:\Program\ Files\IAR\ Systems\Embedded\ Workbench\ 9.2\arm\inc\c\stddef.h \
   E:\Microcontroller\stm32\uc1698u_160x160_F407\EWARM\..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy\stm32_hal_legacy.h \

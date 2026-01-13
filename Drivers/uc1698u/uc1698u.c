@@ -3822,8 +3822,8 @@ void init(void)
 	write_com(0xa1);			//line rate 15.2klps
 	write_com(0xd1);			//rgb-rgb
         
-//	write_com(0xd5);			//4k color mode
-        write_com(0xd6);			//64k color mode
+	write_com(0xd5);			//4k color mode
+//        write_com(0xd6);			//64k color mode
         
 	write_com(0x84);			//12:partial display control disable
 
@@ -3865,13 +3865,13 @@ void init(void)
 	write_com(0xf2);			//display start 
 	write_com(0);				//0
 	write_com(0xf3);			//display end
-	write_com(159);			//160
+	write_com(160);			//160
 
 	  		display_address();
     		display_white();
 
-//	write_com(0xad);			//display on,select on/off mode.Green Enhance mode disable
-        write_com(0xaf);			//display on,select 32 scale mode.Green Enhance mode disable        
+	write_com(0xad);			//display on,select on/off mode.Green Enhance mode disable
+//        write_com(0xaf);			//display on,select 32 scale mode.Green Enhance mode disable        
                 
 }
 
@@ -3889,14 +3889,14 @@ void display_start_window(uint8_t x, uint8_t y)
 {
    uint8_t data1=0, data2=0;	
   
+   x /= 3;
+   x += 37;   
    data1 = (x>>0)&0x0F;
    data2 = (x>>4)&0x0F; //5?????????????????????
    data2 |= 0x10;
    
    write_com(data1);
    write_com(data2);
-   
-   
    
    data1=0, data2=0;
    data1 = (y>>0)&0x0F;
@@ -4049,6 +4049,13 @@ void Data_processing_enh(const uint8_t *pic)  //turns 1byte B/W data to 4k-color
 
 void Set_window(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 {
+  uint8_t data1=0, data2=0;
+  
+  x /= 3;
+  x += 37;
+  
+  w /= 3;
+  
   write_com(0xF4); //start X
   write_com(x);
   
@@ -4059,7 +4066,27 @@ void Set_window(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
   write_com(x+w-1);
   
   write_com(0xF7); //height
-  write_com(y+h-1);  
+  write_com(y+h-1); 
+  
+  
+   
+  
+   data1 = (x>>0)&0x0F;
+   data2 = (x>>4)&0x0F; //5?????????????????????
+   data2 |= 0x10;
+   
+   write_com(data1);
+   write_com(data2);
+   
+   data1=0, data2=0;
+   data1 = (y>>0)&0x0F;
+   data1 |= 0x60;   
+   
+   data2 = (y>>4)&0x0F; 
+   data2 |= 0x70;
+   
+   write_com(data1);
+   write_com(data2);  
 }
 
 

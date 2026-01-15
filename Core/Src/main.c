@@ -99,34 +99,7 @@ void SystemClock_Config(void);
    Реализуйте в своём проекте: очистка предыдущего положения и рисование нового. */
 void Display_DrawSquare(int ix, int iy, int size, int num)
 {
- static int old_x[10], old_y[10], old_size[10];
- 
- 
-  Set_window(old_x[num], old_y[num], old_size[num], old_size[num]);
-  for(uint8_t j=0;j<100;j++)
-        {           
-          write_data(0x00);        
-          write_data(0x00);          
-          write_data(0x00); 
-        }     
-  
- 
- 
- 
-  Set_window(ix, iy, size, size);
-
-  for(uint8_t j=0;j<100;j++)
-        {           
-          write_data(0xFF);        
-          write_data(0xFF);          
-          write_data(0xFF); 
-        } 
-  
-  old_x[num] = ix;
-  old_y[num] = iy;
-  old_size[num] = size;
-
-  
+  u8g2_DrawBox(&u8g2, ix, iy, size, size);
 }  
   
   
@@ -138,15 +111,15 @@ static inline uint32_t millis(void) { return HAL_GetTick(); }
 Sprite s[9];
 
 void init_sprites(void) {
-    s[0].num = 0; s[0].size = 18; s[0].x = 20.0f;  s[0].y = 30.0f;  s[0].vx = 32.0f;  s[0].vy = 3* 11.0f;   //6; 
-    s[1].num = 1; s[1].size = 18; s[1].x = 60.0f;  s[1].y = 40.0f;  s[1].vx = -24.0f; s[1].vy = 3* 18.0f;   //12;
-    s[2].num = 2; s[2].size = 18; s[2].x = 100.0f; s[2].y = 80.0f;  s[2].vx = 15.0f;  s[2].vy = 3* -20.0f;  //18;
-    s[3].num = 3; s[3].size = 18; s[3].x = 10.0f;  s[3].y = 120.0f; s[3].vx = 40.0f;  s[3].vy = 3* -10.0f;  //8; 
-    s[4].num = 4; s[4].size = 18; s[4].x = 130.0f; s[4].y = 20.0f;  s[4].vx = -18.0f; s[4].vy = 3* 22.0f;   //10;
-    s[5].num = 5; s[5].size = 18; s[5].x = 50.0f;  s[5].y = 100.0f; s[5].vx = 12.0f;  s[5].vy = 3* -15.0f;  //14;
-    s[6].num = 6; s[6].size = 18; s[6].x = 5.0f;   s[6].y = 5.0f;   s[6].vx = 28.0f;  s[6].vy = 3* 14.0f;   //7; 
-    s[7].num = 7; s[7].size = 18; s[7].x = 140.0f; s[7].y = 130.0f; s[7].vx = -20.0f; s[7].vy = 3* -12.0f;  //9; 
-    s[8].num = 8; s[8].size = 18; s[8].x = 80.0f;  s[8].y = 10.0f;  s[8].vx = 10.0f;  s[8].vy = 3* 25.0f;   //11;
+    s[0].num = 0; s[0].size = 17; s[0].x = 20.0f;  s[0].y = 30.0f;  s[0].vx = 3* 32.0f;  s[0].vy = 3* 11.0f;   //6; 
+    s[1].num = 1; s[1].size = 29; s[1].x = 60.0f;  s[1].y = 40.0f;  s[1].vx = 3* -24.0f; s[1].vy = 3* 18.0f;   //12;
+    s[2].num = 2; s[2].size = 12; s[2].x = 100.0f; s[2].y = 80.0f;  s[2].vx = 3* 15.0f;  s[2].vy = 3* -20.0f;  //18;
+    s[3].num = 3; s[3].size = 13; s[3].x = 10.0f;  s[3].y = 120.0f; s[3].vx = 3* 40.0f;  s[3].vy = 3* -10.0f;  //8; 
+    s[4].num = 4; s[4].size = 22; s[4].x = 130.0f; s[4].y = 20.0f;  s[4].vx = 3* -18.0f; s[4].vy = 3* 22.0f;   //10;
+    s[5].num = 5; s[5].size = 14; s[5].x = 50.0f;  s[5].y = 100.0f; s[5].vx = 3* 12.0f;  s[5].vy = 3* -15.0f;  //14;
+    s[6].num = 6; s[6].size = 30; s[6].x = 5.0f;   s[6].y = 5.0f;   s[6].vx = 3* 28.0f;  s[6].vy = 3* 14.0f;   //7; 
+    s[7].num = 7; s[7].size = 19; s[7].x = 140.0f; s[7].y = 130.0f; s[7].vx = 3* -20.0f; s[7].vy = 3* -12.0f;  //9; 
+    s[8].num = 8; s[8].size = 10; s[8].x = 80.0f;  s[8].y = 10.0f;  s[8].vx = 3* 10.0f;  s[8].vy = 3* 25.0f;   //11;
 }
 
 
@@ -251,34 +224,12 @@ int main(void)
 //      u8g2_ClearDisplay(&u8g2);       
 //      u8g2_SetContrast(&u8g2, 40);   
       u8g2_SetFontMode(&u8g2, 0);  
-  
-   display_white();
+      display_white();
+      u8g2_SetFont(&u8g2, u8g2_font_logisoso18_tf);
       
-      
-  uint8_t i=0;    
-while(1)
-{
-  
-u8g2_ClearBuffer(&u8g2);
-
-u8g2_DrawBox(&u8g2, i, i, 15, 15);
-//u8g2_DrawBox(u8g2_t *u8g2, u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t h)
-
-u8g2_SendBuffer(&u8g2);
-  
-
-if (i<144) i++; else i=0;
-HAL_Delay(100);
-
-} 
-  
-  
-  
-  
-  
-  
-  
-  
+      u8g2_SetDrawColor(&u8g2, 2);
+      u8g2_SetFontMode(&u8g2, 1);
+       
 
 #define DALAY_TIME      500 
   
@@ -292,7 +243,7 @@ HAL_Delay(100);
 
     
   write_com(0x81);			//electronic potentionmeter
-  write_com(180);
+  write_com(170);
     
   
    init_sprites();
@@ -347,13 +298,21 @@ for (int a = 0; a < 9; ++a) {
 /* Рендер */
 //Set_window(0, 0, 160, 160);
 //display_white();
+
+u8g2_ClearBuffer(&u8g2);
+
+
 for (int i = 0; i < 9; ++i) {
     int ix = (int)(s[i].x + 0.5f);
     int iy = (int)(s[i].y + 0.5f);
     Display_DrawSquare(ix, iy, s[i].size, s[i].num);
 }
 
-        HAL_Delay(50);
+u8g2_DrawStr(&u8g2, 0, 25, "U8G2 UC1698U!!!");
+
+
+u8g2_SendBuffer(&u8g2);
+        HAL_Delay(1);
     }
 
     

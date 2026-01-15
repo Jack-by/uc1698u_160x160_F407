@@ -105,105 +105,6 @@ static const uint8_t u8x8_d_uc1611s_flip1_seq[] = {
 };
 
 
-static void Data_processing_uc1698(uint8_t in_bw, uint8_t* out4k)  //turns 1byte B/W data to 4k-color data(RRRR-GGGG-BBBB)   
-{
-uint8_t temp1,temp2,temp3,temp4,temp5,temp6,temp7,temp8;
-uint8_t h11,h12,h13,h14,h15,h16,h17,h18,d1,d2,d3,d4;
-
-
- // Обрабатываем биты в обратном порядке (от младшего к старшему)
-    for (int i = 0; i < 4; i++) {
-        uint8_t bit = (in_bw >> (7 - i * 2)) & 1;  // берём бит 7,5,3,1
-        uint8_t low_nibble = bit ? 0x0F : 0x00;    // теперь в младший нибл
-        
-        bit = (in_bw >> (6 - i * 2)) & 1;  // берём бит 6,4,2,0
-        uint8_t high_nibble = bit ? 0xF0 : 0x00;   // теперь в старший нибл
-        
-        out4k[3 - i] = high_nibble | low_nibble;
-    }
-
-
-
-
-
-
-
-
-
-//		temp1=(in_bw&0x80)>>0;
-//		temp2=(in_bw&0x40)>>3;
-//		temp3=(in_bw&0x20)<<2;
-//		temp4=(in_bw&0x10)>>1;
-//		temp5=(in_bw&0x08)<<4;
-//		temp6=(in_bw&0x04)<<1;
-//		temp7=(in_bw&0x02)<<6;
-//		temp8=(in_bw&0x01)<<3;
-//                
-//		h11=temp1|temp1>>1|temp1>>2|temp1>>3;
-//		h12=temp2|temp2>>1|temp2>>2|temp2>>3;
-//		h13=temp3|temp3>>1|temp3>>2|temp3>>3;
-//		h14=temp4|temp4>>1|temp4>>2|temp4>>3;
-//		h15=temp5|temp5>>1|temp5>>2|temp5>>3;
-//		h16=temp6|temp6>>1|temp6>>2|temp6>>3;
-//		h17=temp7|temp7>>1|temp7>>2|temp7>>3;
-//		h18=temp8|temp8>>1|temp8>>2|temp8>>3;
-//                
-//		out4k[0]=h11|h12;
-//		out4k[1]=h13|h14;
-//		out4k[2]=h15|h16;
-//		out4k[3]=h17|h18;  
-                
-               
-                
-                
-}
-
-
-//void Set_window(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
-//{
-//  uint8_t data1=0, data2=0;
-//  extern u8x8_t u8x8;
-//  
-//  x /= 3;
-//  x += 37;
-//  
-//  w /= 3;
-//  
-//  u8x8_cad_SendCmd(&u8x8,0xF4); //start X
-//  u8x8_cad_SendCmd(&u8x8,x);
-//                   
-//  u8x8_cad_SendCmd(&u8x8,0xF5); //start y
-//  u8x8_cad_SendCmd(&u8x8,y);
-//                   
-//  u8x8_cad_SendCmd(&u8x8,0xF6); //width
-//  u8x8_cad_SendCmd(&u8x8,x+w-1);
-//                   
-//  u8x8_cad_SendCmd(&u8x8,0xF7); //height
-//  u8x8_cad_SendCmd(&u8x8,y+h-1); 
-//  
-//  
-//   
-//  
-//   data1 = (x>>0)&0x0F;
-//   data2 = (x>>4)&0x0F; //5?????????????????????
-//   data2 |= 0x10;
-//   
-//   write_com(data1);
-//   write_com(data2);
-//   
-//   data1=0, data2=0;
-//   data1 = (y>>0)&0x0F;
-//   data1 |= 0x60;   
-//   
-//   data2 = (y>>4)&0x0F; 
-//   data2 |= 0x70;
-//   
-//   write_com(data1);
-//   write_com(data2);  
-//}
-
-
-
 uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
   uint8_t x, y, c;
@@ -218,12 +119,10 @@ uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *a
       u8x8_cad_StartTransfer(u8x8);
     
       x = ((u8x8_tile_t *)arg_ptr)->x_pos;
-      x *= 8;
+      x *= 8;      
+      x /= 3;
       x += u8x8->x_offset;
       
-      
-      x /= 3;
-      x += 37;      
       w /= 3;
       u8x8_cad_SendCmd(u8x8,0xF4); //start X
       u8x8_cad_SendCmd(u8x8,x);
@@ -258,19 +157,13 @@ uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *a
       u8x8_cad_SendCmd(u8x8,data2);
       
       
-      
       c = ((u8x8_tile_t *)arg_ptr)->cnt;
       c *= 8;
       ptr = ((u8x8_tile_t *)arg_ptr)->tile_ptr;
       do
       {
         uint8_t arr_4k[4], temp=0, raw_img=0;
-        uint8_t num_ptr=0, num_sdvig=0;
-        
-//        uint8_t arr_4k[4], temp=0, raw_img=0;
-//        uint16_t byte_idx = 0;  // индекс байта в буфере u8g2
-//        uint8_t bit_idx = 0;    // индекс бита внутри байта (строка)
-        
+        uint8_t num_ptr=0, num_sdvig=0;    
         
 	for (uint16_t i=0; i<c; i++)
         {
@@ -293,37 +186,24 @@ uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *a
           }
           
           
-//           raw_img = 0;    
-//    // Собираем 8 пикселей из одной строки (bit_idx) разных колонок (byte_idx+0..7)
-//    for (uint8_t col = 0; col < 8; col++)
-//    {
-//        uint16_t buf_byte = byte_idx + col;
-//        if (buf_byte < 160 * 20)  // проверка границ буфера (160 колонок * 20 байтов на колонку)
-//        {
-//            if (ptr[buf_byte] & (1 << bit_idx))
-//            {
-//                raw_img |= (1 << col);
-//            }
-//        }
-//    }
-          
-          
-          
-          
-          Data_processing_uc1698(raw_img, arr_4k);
-          
-          
-//          arr_4k[0] = 0x0F;
-          
+          // Обрабатываем биты в обратном порядке (от младшего к старшему)
+          for (int i = 0; i < 4; i++) {
+            uint8_t bit = (raw_img >> (7 - i * 2)) & 1;  // берём бит 7,5,3,1
+            uint8_t low_nibble = bit ? 0x0F : 0x00;    // теперь в младший нибл
+            
+            bit = (raw_img >> (6 - i * 2)) & 1;  // берём бит 6,4,2,0
+            uint8_t high_nibble = bit ? 0xF0 : 0x00;   // теперь в старший нибл
+            
+            arr_4k[3 - i] = high_nibble | low_nibble;
+          }
           
           u8x8_cad_SendData(u8x8, 4, arr_4k);	/* note: SendData can not handle more than 255 bytes */ 
+          
           if ((i - 19) % 20 == 0) 
           {
             u8x8_cad_SendData(u8x8, 1, &temp);
           }
-//          ptr++;
-        }
-        
+        }        
 	arg_int--;
       } while( arg_int > 0 );
       
@@ -731,9 +611,12 @@ uint8_t u8x8_d_uc1611_ew50850(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
 */
 
 
-/** ETO DANNIE DLYA COMUNICACII S DISPLEEM              **/
 
+/********************************************************************************
 
+                                  UC1698U
+
+*********************************************************************************/
 
 static const u8x8_display_info_t u8x8_uc1611_cg160160_display_info =
 {
@@ -753,7 +636,7 @@ static const u8x8_display_info_t u8x8_uc1611_cg160160_display_info =
   /* write_pulse_width_ns = */ 80,	/* uc1611 datasheet, page 60 */
   /* tile_width = */ 20,		/* width of 20*8=160 pixel */
   /* tile_height = */ 20,
-  /* default_x_offset = */ 0,
+  /* default_x_offset = */ 37,
   /* flipmode_x_offset = */ 0,
   /* pixel_width = */ 160,
   /* pixel_height = */ 160

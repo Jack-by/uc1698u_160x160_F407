@@ -105,6 +105,37 @@ static const uint8_t u8x8_d_uc1611s_flip1_seq[] = {
 };
 
 
+
+
+// Таблица 16 элементов × 2 байта = 32 байта
+static const uint8_t lut_nibble[16][2] = {
+  {0x00, 0x00}, // 0b0000
+  {0xF0, 0x00}, // 0b0001
+  {0x0F, 0x00}, // 0b0010
+  {0xFF, 0x00}, // 0b0011
+  {0x00, 0xF0}, // 0b0100
+  {0xF0, 0xF0}, // 0b0101
+  {0x0F, 0xF0}, // 0b0110
+  {0xFF, 0xF0}, // 0b0111
+  {0x00, 0x0F}, // 0b1000
+  {0xF0, 0x0F}, // 0b1001
+  {0x0F, 0x0F}, // 0b1010
+  {0xFF, 0x0F}, // 0b1011
+  {0x00, 0xFF}, // 0b1100
+  {0xF0, 0xFF}, // 0b1101
+  {0x0F, 0xFF}, // 0b1110
+  {0xFF, 0xFF}, // 0b1111
+};
+
+
+
+
+
+
+
+
+
+
 uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
   uint8_t x, y, c;
@@ -131,8 +162,7 @@ uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *a
       y *= 8;
       u8x8_cad_SendCmd(u8x8,0xF5); //start y
       u8x8_cad_SendCmd(u8x8,y);
-    
-      
+          
       u8x8_cad_SendCmd(u8x8,0xF6); //width
       u8x8_cad_SendCmd(u8x8,x+w);
       
@@ -160,52 +190,113 @@ uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *a
       c = ((u8x8_tile_t *)arg_ptr)->cnt;
       c *= 8;
       ptr = ((u8x8_tile_t *)arg_ptr)->tile_ptr;
-      do
-      {
-        uint8_t arr_4k[4], temp=0, raw_img=0;
-        uint8_t num_ptr=0, num_sdvig=0;    
-        
-	for (uint16_t i=0; i<c; i++)
-        {
-          raw_img=0;
-          
-          raw_img |= (ptr[(num_ptr)+0]&(1<<(num_sdvig)))>0 ? 1<<0 : 0<<0;
-          raw_img |= (ptr[(num_ptr)+1]&(1<<(num_sdvig)))>0 ? 1<<1 : 0<<1;
-          raw_img |= (ptr[(num_ptr)+2]&(1<<(num_sdvig)))>0 ? 1<<2 : 0<<2;
-          raw_img |= (ptr[(num_ptr)+3]&(1<<(num_sdvig)))>0 ? 1<<3 : 0<<3;
-          raw_img |= (ptr[(num_ptr)+4]&(1<<(num_sdvig)))>0 ? 1<<4 : 0<<4;
-          raw_img |= (ptr[(num_ptr)+5]&(1<<(num_sdvig)))>0 ? 1<<5 : 0<<5;
-          raw_img |= (ptr[(num_ptr)+6]&(1<<(num_sdvig)))>0 ? 1<<6 : 0<<6;
-          raw_img |= (ptr[(num_ptr)+7]&(1<<(num_sdvig)))>0 ? 1<<7 : 0<<7;
-          
-          num_ptr += 8;
-          if (num_ptr == 160)
-          {
-            num_ptr=0;
-            num_sdvig++;
-          }
-          
-          
-          // Обрабатываем биты в обратном порядке (от младшего к старшему)
-          for (int i = 0; i < 4; i++) {
-            uint8_t bit = (raw_img >> (7 - i * 2)) & 1;  // берём бит 7,5,3,1
-            uint8_t low_nibble = bit ? 0x0F : 0x00;    // теперь в младший нибл
-            
-            bit = (raw_img >> (6 - i * 2)) & 1;  // берём бит 6,4,2,0
-            uint8_t high_nibble = bit ? 0xF0 : 0x00;   // теперь в старший нибл
-            
-            arr_4k[3 - i] = high_nibble | low_nibble;
-          }
-          
-          u8x8_cad_SendData(u8x8, 4, arr_4k);	/* note: SendData can not handle more than 255 bytes */ 
-          
-          if ((i - 19) % 20 == 0) 
-          {
-            u8x8_cad_SendData(u8x8, 1, &temp);
-          }
-        }        
-	arg_int--;
-      } while( arg_int > 0 );
+      
+      
+      
+    // В коде:
+do
+{
+  uint8_t temp=0;
+  uint8_t num_ptr=0, num_sdvig=0;    
+  
+  for (uint16_t i=0; i<c; i++)
+  {
+    uint8_t raw_img = 0;
+    
+    if (ptr[num_ptr+0] & (1<<num_sdvig)) raw_img |= 1<<0;
+    if (ptr[num_ptr+1] & (1<<num_sdvig)) raw_img |= 1<<1;
+    if (ptr[num_ptr+2] & (1<<num_sdvig)) raw_img |= 1<<2;
+    if (ptr[num_ptr+3] & (1<<num_sdvig)) raw_img |= 1<<3;
+    if (ptr[num_ptr+4] & (1<<num_sdvig)) raw_img |= 1<<4;
+    if (ptr[num_ptr+5] & (1<<num_sdvig)) raw_img |= 1<<5;
+    if (ptr[num_ptr+6] & (1<<num_sdvig)) raw_img |= 1<<6;
+    if (ptr[num_ptr+7] & (1<<num_sdvig)) raw_img |= 1<<7;
+    
+    num_ptr += 8;
+    if (num_ptr == 160)
+    {
+      num_ptr=0;
+      num_sdvig++;
+    }
+    
+    // Разбиваем на два нибла и копируем
+    const uint8_t *low  = lut_nibble[raw_img & 0x0F];
+    const uint8_t *high = lut_nibble[raw_img >> 4];
+    
+    uint8_t arr_4k[4];
+    arr_4k[0] = low[0];
+    arr_4k[1] = low[1];
+    arr_4k[2] = high[0];
+    arr_4k[3] = high[1];
+    
+    u8x8_cad_SendData(u8x8, 4, arr_4k);
+    
+    if ((i - 19) % 20 == 0) 
+    {
+      u8x8_cad_SendData(u8x8, 1, &temp);
+    }
+  }        
+  arg_int--;
+} while( arg_int > 0 );
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+//      do
+//      {
+//        uint8_t arr_4k[4], temp=0, raw_img=0;
+//        uint8_t num_ptr=0, num_sdvig=0;    
+//        
+//	for (uint16_t i=0; i<c; i++)
+//        {
+//          raw_img=0;
+//          
+//          raw_img |= (ptr[(num_ptr)+0]&(1<<(num_sdvig)))>0 ? 1<<0 : 0<<0;
+//          raw_img |= (ptr[(num_ptr)+1]&(1<<(num_sdvig)))>0 ? 1<<1 : 0<<1;
+//          raw_img |= (ptr[(num_ptr)+2]&(1<<(num_sdvig)))>0 ? 1<<2 : 0<<2;
+//          raw_img |= (ptr[(num_ptr)+3]&(1<<(num_sdvig)))>0 ? 1<<3 : 0<<3;
+//          raw_img |= (ptr[(num_ptr)+4]&(1<<(num_sdvig)))>0 ? 1<<4 : 0<<4;
+//          raw_img |= (ptr[(num_ptr)+5]&(1<<(num_sdvig)))>0 ? 1<<5 : 0<<5;
+//          raw_img |= (ptr[(num_ptr)+6]&(1<<(num_sdvig)))>0 ? 1<<6 : 0<<6;
+//          raw_img |= (ptr[(num_ptr)+7]&(1<<(num_sdvig)))>0 ? 1<<7 : 0<<7;
+//          
+//          num_ptr += 8;
+//          if (num_ptr == 160)
+//          {
+//            num_ptr=0;
+//            num_sdvig++;
+//          }
+//          
+//          
+//          // Обрабатываем биты в обратном порядке (от младшего к старшему)
+//          for (int i = 0; i < 4; i++) {
+//            uint8_t bit = (raw_img >> (7 - i * 2)) & 1;  // берём бит 7,5,3,1
+//            uint8_t low_nibble = bit ? 0x0F : 0x00;    // теперь в младший нибл
+//            
+//            bit = (raw_img >> (6 - i * 2)) & 1;  // берём бит 6,4,2,0
+//            uint8_t high_nibble = bit ? 0xF0 : 0x00;   // теперь в старший нибл
+//            
+//            arr_4k[3 - i] = high_nibble | low_nibble;
+//          }
+//          
+//          u8x8_cad_SendData(u8x8, 4, arr_4k);	/* note: SendData can not handle more than 255 bytes */ 
+//          
+//          if ((i - 19) % 20 == 0) 
+//          {
+//            u8x8_cad_SendData(u8x8, 1, &temp);
+//          }
+//        }        
+//	arg_int--;
+//      } while( arg_int > 0 );
       
       u8x8_cad_EndTransfer(u8x8);
       break;

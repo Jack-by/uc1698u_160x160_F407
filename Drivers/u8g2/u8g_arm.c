@@ -205,14 +205,14 @@ uint8_t u8x8_gpio_and_delay_template(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int,
     case U8X8_MSG_GPIO_AND_DELAY_INIT:	// called once during init phase of u8g2/u8x8
       break;							// can be used to setup pins
     case U8X8_MSG_DELAY_NANO:			// delay arg_int * 1 nano second     
-      __NOP(); __NOP();
+//      __NOP(); __NOP();
       break;    
     case U8X8_MSG_DELAY_100NANO:		// delay arg_int * 100 nano seconds
-      __NOP(); __NOP();
+//      __NOP(); __NOP();
       break;
       
     case U8X8_MSG_DELAY_10MICRO:		// delay arg_int * 10 micro seconds
-      __NOP(); __NOP();
+//      __NOP(); __NOP();
       break;
       
     case U8X8_MSG_DELAY_MILLI:			// delay arg_int * 1 milli second

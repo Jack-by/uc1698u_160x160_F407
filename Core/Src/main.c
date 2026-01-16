@@ -204,7 +204,7 @@ int main(void)
   
   
   
-      u8g2_Setup_uc1611_cg160160_f(&u8g2, U8G2_R2, u8x8_byte_hw_fsmc, u8x8_gpio_and_delay_template);     
+      u8g2_Setup_uc1698u_cg160160(&u8g2, U8G2_R3, u8x8_byte_hw_fsmc, u8x8_gpio_and_delay_template);     
       u8g2_InitDisplay(&u8g2); // send init sequence to the display, display is in sleep mode after this,
       u8g2_SetPowerSave(&u8g2, 0); // wake up display
       u8g2_ClearDisplay(&u8g2);       
@@ -218,16 +218,16 @@ int main(void)
       u8g2_SetFontMode(&u8g2, 1);
        
 
-      
+      u8g2_SetFlipMode(&u8g2, 0);
       
       
       u8g2_ClearBuffer(&u8g2);      
-      u8g2_DrawXBM(&u8g2, 20, 60, 128, 64, u8g2_logo_128x64_bits);     
+      u8g2_DrawXBM(&u8g2, 20, 40, 128, 64, u8g2_logo_128x64_bits);     
       u8g2_SendBuffer(&u8g2);     
       
       
  /** Comment out the while(1) loop if you need a dynamic image with squares **/     
-    while(1);
+//    while(1);
      
   
       

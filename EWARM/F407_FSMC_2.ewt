@@ -1944,6 +1944,9 @@
                 <name>$PROJ_DIR$\..\Drivers\u8g2\u8x8_d_uc1638.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\Drivers\u8g2\u8x8_d_uc1698.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\Drivers\u8g2\u8x8_d_uc1701_dogs102.c</name>
             </file>
             <file>

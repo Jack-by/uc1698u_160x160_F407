@@ -53,34 +53,16 @@
 
 
 
-//#define GRAY_SCALE       
-//#define COLOR_64K    
-
 static const uint8_t u8x8_d_uc1611s_powersave0_seq[] = {
-  U8X8_START_TRANSFER(),             	/* enable chip, delay is part of the transfer start */ 
-/**************************************************************************************************************************************************************/  
-  
-#ifdef GRAY_SCALE  
-  U8X8_C(0x0af),   //grayscale mode		        /* display on, UC1698s */
-#else
-  U8X8_C(0x0ad), //on/off mode		                /* display on, UC1698s */
-#endif  
-  
-/**************************************************************************************************************************************************************/  
-  
+  U8X8_START_TRANSFER(),             	/* enable chip, delay is part of the transfer start */
+  U8X8_C(0x0a9),		                /* display on, UC1611s */
   U8X8_END_TRANSFER(),             	/* disable chip */
   U8X8_END()             			/* end of sequence */
 };
 
 static const uint8_t u8x8_d_uc1611s_powersave1_seq[] = {
-  U8X8_START_TRANSFER(),             	/* enable chip, delay is part of the transfer start */  
-/**************************************************************************************************************************************************************/  
-#ifdef GRAY_SCALE  
-  U8X8_C(0x0ae),   //grayscale mode		        /* display on, UC1698s */
-#else
-  U8X8_C(0x0ac), //on/off mode		        /* display on, UC1698s */     
-#endif    
-/**************************************************************************************************************************************************************/    
+  U8X8_START_TRANSFER(),             	/* enable chip, delay is part of the transfer start */
+  U8X8_C(0x0a8),		                /* display off, enter sleep mode, UC1611s */
   U8X8_END_TRANSFER(),             	/* disable chip */
   U8X8_END()             			/* end of sequence */
 };
@@ -99,106 +81,34 @@ static const uint8_t u8x8_d_uc1611s_flip1_seq[] = {
   U8X8_END()             			/* end of sequence */
 };
 
-
-static const uint8_t lut_nibble[16][2] = {
-  {0x00, 0x00}, // 0b0000
-  {0x00, 0x0F}, // 0b0001
-  {0x00, 0xF0}, // 0b0010
-  {0x00, 0xFF}, // 0b0011
-  {0x0F, 0x00}, // 0b0100
-  {0x0F, 0x0F}, // 0b0101
-  {0x0F, 0xF0}, // 0b0110
-  {0x0F, 0xFF}, // 0b0111
-  {0xF0, 0x00}, // 0b1000
-  {0xF0, 0x0F}, // 0b1001
-  {0xF0, 0xF0}, // 0b1010
-  {0xF0, 0xFF}, // 0b1011
-  {0xFF, 0x00}, // 0b1100
-  {0xFF, 0x0F}, // 0b1101
-  {0xFF, 0xF0}, // 0b1110
-  {0xFF, 0xFF}, // 0b1111
-};
-
-
 uint8_t u8x8_d_uc1611_common(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
   uint8_t x, y, c;
   uint8_t *ptr;
-  uint8_t w=159, h=20;
-  
-  uint8_t data1=0, data2=0;
-  
   switch(msg)
   {
     case U8X8_MSG_DISPLAY_DRAW_TILE:
       u8x8_cad_StartTransfer(u8x8);
     
       x = ((u8x8_tile_t *)arg_ptr)->x_pos;
-      x *= 8;      
-      x /= 3;
+      x *= 8;
       x += u8x8->x_offset;
-      
-      w /= 3;
-      u8x8_cad_SendCmd(u8x8,0xF4); //start X
-      u8x8_cad_SendCmd(u8x8,x);
-      
+   
+      u8x8_cad_SendCmd(u8x8, 0x000 | ((x&15)));
+      u8x8_cad_SendCmd(u8x8, 0x010 | (x>>4) );
+    
       y = ((u8x8_tile_t *)arg_ptr)->y_pos;
-      y *= 8;
-      u8x8_cad_SendCmd(u8x8,0xF5); //start y
-      u8x8_cad_SendCmd(u8x8,y);
-          
-      u8x8_cad_SendCmd(u8x8,0xF6); //width
-      u8x8_cad_SendCmd(u8x8,x+w);
-      
-      u8x8_cad_SendCmd(u8x8,0xF7); //height
-      u8x8_cad_SendCmd(u8x8,y+h); 
-      
-      data1 = (x>>0)&0x0F;
-      data2 = (x>>4)&0x0F;
-      data2 |= 0x10;
-      
-      u8x8_cad_SendCmd(u8x8,data1);
-      u8x8_cad_SendCmd(u8x8,data2);
-      
-      data1=0, data2=0;
-      data1 = (y>>0)&0x0F;
-      data1 |= 0x60;   
-      
-      data2 = (y>>4)&0x0F; 
-      data2 |= 0x70;
-      
-      u8x8_cad_SendCmd(u8x8,data1);
-      u8x8_cad_SendCmd(u8x8,data2);
-      
-      
+      u8x8_cad_SendCmd(u8x8, 0x060 | (y&15));
+      u8x8_cad_SendCmd(u8x8, 0x070 | (y>>4));
+    
       c = ((u8x8_tile_t *)arg_ptr)->cnt;
       c *= 8;
       ptr = ((u8x8_tile_t *)arg_ptr)->tile_ptr;
-      
       do
       {
-        for (uint16_t i=0; i<c; i++)
-        {  
-          const uint8_t *low  = lut_nibble[*ptr & 0x0F];
-          const uint8_t *high = lut_nibble[*ptr >> 4];
-          
-          uint8_t arr_4k[4];
-          arr_4k[3] = low[1];
-          arr_4k[2] = low[0];
-          arr_4k[1] = high[1];
-          arr_4k[0] = high[0];
-          
-          u8x8_cad_SendData(u8x8, 4, arr_4k);
-          
-          if ((i - 19) % 20 == 0) 
-          {
-            u8x8_cad_SendData(u8x8, 1, NULL);
-          }
-          ptr++;
-        }        
-        arg_int--;
+	u8x8_cad_SendData(u8x8, c, ptr);	/* note: SendData can not handle more than 255 bytes */
+	arg_int--;
       } while( arg_int > 0 );
-
       
       u8x8_cad_EndTransfer(u8x8);
       break;
@@ -603,14 +513,6 @@ uint8_t u8x8_d_uc1611_ew50850(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *
   Connect CS1 to 3.3V and CS0 to GPIO
 */
 
-
-
-/********************************************************************************
-
-                                  UC1698U
-
-*********************************************************************************/
-
 static const u8x8_display_info_t u8x8_uc1611_cg160160_display_info =
 {
   /* chip_enable_level = */ 0,			/* use CS0 of the UC1611 */
@@ -618,8 +520,8 @@ static const u8x8_display_info_t u8x8_uc1611_cg160160_display_info =
   
   /* post_chip_enable_wait_ns = */ 10,	/* uc1611 datasheet, page 60, actually 0 */
   /* pre_chip_disable_wait_ns = */ 10,	/* uc1611 datasheet, page 60, actually 0 */
-  /* reset_pulse_width_ms = */ 20, 
-  /* post_reset_wait_ms = */ 200, 	/* uc1611 datasheet, page 67 */
+  /* reset_pulse_width_ms = */ 1, 
+  /* post_reset_wait_ms = */ 10, 	/* uc1611 datasheet, page 67 */
   /* sda_setup_time_ns = */ 10,		/* uc1611 datasheet, page 64, actually 0 */
   /* sck_pulse_width_ns = */ 60,	/* half of cycle time  */
   /* sck_clock_hz = */ 8000000UL,	/* since Arduino 1.6.0, the SPI bus speed in Hz. Should be  1000000000/sck_pulse_width_ns */
@@ -629,7 +531,7 @@ static const u8x8_display_info_t u8x8_uc1611_cg160160_display_info =
   /* write_pulse_width_ns = */ 80,	/* uc1611 datasheet, page 60 */
   /* tile_width = */ 20,		/* width of 20*8=160 pixel */
   /* tile_height = */ 20,
-  /* default_x_offset = */ 37,
+  /* default_x_offset = */ 0,
   /* flipmode_x_offset = */ 0,
   /* pixel_width = */ 160,
   /* pixel_height = */ 160
@@ -661,73 +563,29 @@ static const uint8_t u8x8_d_uc1611_cg160160_init_seq[] = {
     
   U8X8_START_TRANSFER(),             	/* enable chip, delay is part of the transfer start */
   U8X8_C(0x0e2),				/* system reset */
-  U8X8_DLY(10),
+  U8X8_DLY(2),
+  U8X8_C(0x024),            			/* Temp. Compensation to 0 = -0.05%/ Grad C */
+  U8X8_C(0x0a3),            			/* line rate */  
+  U8X8_C(0x02f),            			/* internal pump control */
+  U8X8_CAA(0x082, 0x013, 0x001), /* Isolation front clock, "1" is the default value */
+  U8X8_CAA(0x082, 0x014, 0x000), /* Isolation back clock, "0" is the default value */
+  U8X8_C(0x0ea),            			/* bias ratio, default: 0x0ea */
+  U8X8_CA(0x081, 0x090),		/* set contrast, CG160160: 0x090 */
   
-  /*power control*/					
-	U8X8_C(0x0e9),			//Bias Ratio:1/10 bias
-	U8X8_C(0x02b),			//power control set as internal power
-	U8X8_C(0x024),			//set temperate compensation as 0%
-	U8X8_C(0x081),			//electronic potentionmeter
-	U8X8_C(0x096),	                //start contrast level
-
-	/*display control*/
-	U8X8_C(0x0a4),			//all pixel off 
-	U8X8_C(0x0a6),			//inverse display off
-
-	/*lcd control*/
-	U8X8_C(0x0c4),			//Set LCD Maping Control (MY=1, MX=0)
-	U8X8_C(0x0a1),			//line rate 15.2klps
-	U8X8_C(0x0d1),			//rgb-rgb
-        
-
-#ifdef COLOR_64K  
-        U8X8_C(0x0d6),			//64k color mode
-#else
-        U8X8_C(0x0d5),			//4k color mode
-#endif  	      
-	U8X8_C(0x084),			//12:partial display control disable
-
-
-	/*n-line inversion*/
-	U8X8_C(0x0c8),
-	U8X8_C(0x010),			//enable NIV
-
-	/*com scan fuction*/
-	U8X8_C(0x0da),			//enable FRC,PWM,LRM sequence
-
-	/*window*/
-	U8X8_C(0x0f4),			//wpc0:column
-	U8X8_C(0x025),			//start from 112
-	U8X8_C(0x0f6),			//wpc1
-	U8X8_C(0x05A),			//end:272
-
-	U8X8_C(0x0f5),			//wpp0:row
-	U8X8_C(0x000),			//start from 0
-	U8X8_C(0x0f7),			//wpp1
-	U8X8_C(0x09F),			//end 160
-
-	U8X8_C(0x0f8),			//inside mode 
-
-	U8X8_C(0x089),			//RAM control /** Draw right then down **/
-
-	
-	/*scroll line*/
-	U8X8_C(0x040),			//low bit of scroll line
-	U8X8_C(0x050),			//high bit of scroll line
-
-	U8X8_C(0x090),			//14:FLT,FLB set
-	U8X8_C(0x000),
-
-	/*partial display*/
-	U8X8_C(0x084),			//12,set partial display control:off
-	U8X8_C(0x0f1),			//com end
-	U8X8_C(0x09f),			//160
-	U8X8_C(0x0f2),			//display start 
-	U8X8_C(0x000),				//0
-	U8X8_C(0x0f3),			//display end
-	U8X8_C(160),	//????????????????????160
+  //U8X8_CA(0x0f1, 159),			/* set COM end */
+  //U8X8_CA(0x0f2, 0),			/* display line start */
+  //U8X8_CA(0x0f3, 159),			/* display line end */
   
-        U8X8_C(0x0ac),                   //display OFF,select on/off mode.Green Enhance mode disable
+  //U8X8_C(0x0a9),            			/* display enable */
+
+  U8X8_C(0x089),            			/* RAM Address Control: auto increment */
+  U8X8_C(0x0d1),            			/* display pattern */  
+  U8X8_CA(0x0c0, 0x004),            	/* LCD Mapping */
+  U8X8_C(0x000),		                /* column low nibble */
+  U8X8_C(0x010),		                /* column high nibble */  
+  U8X8_C(0x060),		                /* page adr low */
+  U8X8_C(0x070),		                /* page adr high */
+  
   
   U8X8_END_TRANSFER(),             	/* disable chip */
   U8X8_END()             			/* end of sequence */

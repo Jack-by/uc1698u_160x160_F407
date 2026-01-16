@@ -36,13 +36,28 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-/* Квадрат */
-/* Структура спрайта */
+
+
+/* Параметры экрана */
+#define SCREEN_W 160
+#define SCREEN_H 160
+#define SPRITE_COUNT 100
+#define SPRITE_RADIUS 5  // радиус окружности
+
+/* Spatial hash параметры */
+#define GRID_SIZE 20  // размер ячейки (рекомендую >= 2*радиус)
+#define GRID_W ((SCREEN_W / GRID_SIZE) + 1)
+#define GRID_H ((SCREEN_H / GRID_SIZE) + 1)
+#define MAX_PER_CELL 50
+
+/* Структура спрайта: координаты центра, size = радиус */
 typedef struct {
-    float x, y;
-    float vx, vy;
-    uint8_t size;
-    uint8_t num;
+    float x;   // центр x
+    float y;   // центр y
+    float vx;  // скорость x
+    float vy;  // скорость y
+    int size;  // радиус в пикселях
+    int num;   // номер спрайта
 } Sprite;
 
 /* USER CODE END PTD */
@@ -80,139 +95,32 @@ void SystemClock_Config(void);
 
 /* Заглушка: отрисовать квадрат на дисплее в позиции (ix, iy).
    Реализуйте в своём проекте: очистка предыдущего положения и рисование нового. */
-void Display_DrawSquare(int ix, int iy, int size, int num)
+/* Отрисовка круга по центру */
+void Display_DrawCircleAtCenter(int cx, int cy, int size, int num)
 {
-  u8g2_DrawBox(&u8g2, ix, iy, size, size);
-}  
-
-
-
-
-  
-  /* Параметры экрана */
-#define SCREEN_W 160
-#define SCREEN_H 160
-#define SPRITE_COUNT 1000
-#define SPRITE_SIZE 2
+    int r = size / 2;  // радиус из диаметра
+    u8g2_DrawDisc(&u8g2, cx, cy, r, U8G2_DRAW_ALL);
+}
 
 /* Массив спрайтов */
-Sprite s[SPRITE_COUNT];
+static Sprite s[SPRITE_COUNT];
 
-
-
-
-
-
-
-
-/* Прототипы (если нужны) */
-static inline int rects_intersect(const Sprite *a, const Sprite *b);
-static void handle_collision(Sprite *a, Sprite *b);
-
-/* AABB пересечение — возвращает 1 если пересекаются */
-static inline int rects_intersect(const Sprite *a, const Sprite *b)
-{
-    return !(
-        (a->x + a->size <= b->x) ||
-        (b->x + b->size <= a->x) ||
-        (a->y + a->size <= b->y) ||
-        (b->y + b->size <= a->y)
-    );
-}
-
-/* Простая обработка столкновения:
-   - обмен нормальных компонент скоростей (равные массы, эластичное)
-   - убирает перекрытие простым push */
-static void handle_collision(Sprite *a, Sprite *b)
-{
-    /* центры */
-    float axc = a->x + a->size * 0.5f;
-    float ayc = a->y + a->size * 0.5f;
-    float bxc = b->x + b->size * 0.5f;
-    float byc = b->y + b->size * 0.5f;
-
-    float nx = axc - bxc;
-    float ny = ayc - byc;
-    if (nx == 0.0f && ny == 0.0f) { nx = 1.0f; ny = 0.0f; }
-
-    float nlen = sqrtf(nx*nx + ny*ny);
-    if (nlen == 0.0f) return;
-    nx /= nlen; ny /= nlen;
-
-    /* проекции скоростей на нормаль */
-    float adot = a->vx * nx + a->vy * ny;
-    float bdot = b->vx * nx + b->vy * ny;
-
-    /* обмен нормальных компонент */
-    float adot_new = bdot;
-    float bdot_new = adot;
-
-    a->vx += (adot_new - adot) * nx;
-    a->vy += (adot_new - adot) * ny;
-    b->vx += (bdot_new - bdot) * nx;
-    b->vy += (bdot_new - bdot) * ny;
-
-    /* убрать перекрытие (по максимальной оси) */
-    float overlap_x = (a->size + b->size) * 0.5f - fabsf(axc - bxc);
-    float overlap_y = (a->size + b->size) * 0.5f - fabsf(ayc - byc);
-    float push = (overlap_x > overlap_y) ? overlap_x : overlap_y;
-    if (push > 0.0f) {
-        float shift = push * 0.5f;
-        a->x += nx * shift;
-        a->y += ny * shift;
-        b->x -= nx * shift;
-        b->y -= ny * shift;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Простой генератор случайных чисел (если нет rand) */
+/* Простой генератор случайных чисел */
 static uint32_t rng_state = 12345;
 static inline uint32_t simple_rand(void) {
-    rng_state = rng_state * 1103515245 + 12345;
-    return (rng_state >> 16) & 0x7FFF;
+    rng_state = rng_state * 1103515245u + 12345u;
+    return (rng_state >> 16) & 0x7FFFu;
 }
 static inline float randf(float min, float max) {
     return min + (simple_rand() / 32768.0f) * (max - min);
 }
 
-/* Инициализация спрайтов */
-void init_sprites(void) {
-    for (int i = 0; i < SPRITE_COUNT; ++i) {
-        s[i].num = i;
-        s[i].size = SPRITE_SIZE;
-        s[i].x = randf(0, SCREEN_W - SPRITE_SIZE);
-        s[i].y = randf(0, SCREEN_H - SPRITE_SIZE);
-        s[i].vx = randf(-20.0f, 20.0f);
-        s[i].vy = randf(-20.0f, 20.0f);
-    }
-}
-
-/* Spatial hashing для оптимизации коллизий */
-#define GRID_SIZE 10  // размер ячейки сетки (2×размер спрайта)
-#define GRID_W ((SCREEN_W / GRID_SIZE) + 1)
-#define GRID_H ((SCREEN_H / GRID_SIZE) + 1)
-#define MAX_PER_CELL 50  // макс объектов в ячейке
-
+/* Grid cell для spatial hashing */
 typedef struct {
     int count;
     int indices[MAX_PER_CELL];
 } GridCell;
-
-GridCell grid[GRID_W][GRID_H];
+static GridCell grid[GRID_W][GRID_H];
 
 /* Очистка сетки */
 static inline void grid_clear(void) {
@@ -227,9 +135,70 @@ static inline void grid_insert(int idx) {
     int gy = (int)(s[idx].y / GRID_SIZE);
     if (gx < 0) gx = 0; if (gx >= GRID_W) gx = GRID_W - 1;
     if (gy < 0) gy = 0; if (gy >= GRID_H) gy = GRID_H - 1;
+    GridCell *cell = &grid[gx][gy];
+    if (cell->count < MAX_PER_CELL) {
+        cell->indices[cell->count++] = idx;
+    }
+}
+
+/* Проверка пересечения двух кругов */
+static inline int circles_intersect(const Sprite *a, const Sprite *b)
+{
+    float dx = a->x - b->x;
+    float dy = a->y - b->y;
+    float r = a->size + b->size;  // сумма радиусов
+    return (dx*dx + dy*dy) <= (r * r);
+}
+
+/* Обработка столкновения кругов (равные массы, с коэффициентом упругости) */
+static void handle_collision_circle(Sprite *a, Sprite *b)
+{
+    float dx = a->x - b->x;
+    float dy = a->y - b->y;
+    float dist2 = dx*dx + dy*dy;
     
-    if (grid[gx][gy].count < MAX_PER_CELL) {
-        grid[gx][gy].indices[grid[gx][gy].count++] = idx;
+    if (dist2 < 0.01f) { 
+        // Почти совпадающие центры — разводим в случайную сторону
+        dx = randf(-1.0f, 1.0f);
+        dy = randf(-1.0f, 1.0f);
+        dist2 = dx*dx + dy*dy;
+        if (dist2 < 0.01f) { dx = 1.0f; dy = 0.0f; dist2 = 1.0f; }
+    }
+    
+    float dist = sqrtf(dist2);
+    float nx = dx / dist;  // нормаль от b к a
+    float ny = dy / dist;
+
+    /* проекции скоростей на нормаль */
+    float va_n = a->vx * nx + a->vy * ny;
+    float vb_n = b->vx * nx + b->vy * ny;
+
+    /* относительная скорость сближения */
+    float rel_vel = va_n - vb_n;
+    
+    /* если расходятся — не обрабатываем */
+    if (rel_vel <= 0.0f) return;
+
+    /* коэффициент упругости */
+    const float e = 0.8f;
+
+    /* импульс (для равных масс упрощается) */
+    float impulse = -(1.0f + e) * rel_vel * 0.5f;
+
+    a->vx += impulse * nx;
+    a->vy += impulse * ny;
+    b->vx -= impulse * nx;
+    b->vy -= impulse * ny;
+
+    /* убрать перекрытие */
+    float r_sum = (float)(a->size + b->size);
+    float overlap = r_sum - dist;
+    if (overlap > 0.0f) {
+        float shift = (overlap + 0.1f) * 0.5f;  // +0.1 для избежания залипания
+        a->x += nx * shift;
+        a->y += ny * shift;
+        b->x -= nx * shift;
+        b->y -= ny * shift;
     }
 }
 
@@ -239,29 +208,36 @@ static inline void grid_check_collisions(int idx) {
     int gy = (int)(s[idx].y / GRID_SIZE);
     if (gx < 0) gx = 0; if (gx >= GRID_W) gx = GRID_W - 1;
     if (gy < 0) gy = 0; if (gy >= GRID_H) gy = GRID_H - 1;
-    
-    /* Проверяем текущую и соседние ячейки (3×3) */
+
     for (int dx = -1; dx <= 1; ++dx) {
         for (int dy = -1; dy <= 1; ++dy) {
             int ngx = gx + dx;
             int ngy = gy + dy;
             if (ngx < 0 || ngx >= GRID_W || ngy < 0 || ngy >= GRID_H) continue;
-            
             GridCell *cell = &grid[ngx][ngy];
             for (int i = 0; i < cell->count; ++i) {
                 int other = cell->indices[i];
-                if (other <= idx) continue;  // избегаем двойных проверок
-                
-                if (rects_intersect(&s[idx], &s[other])) {
-                    handle_collision(&s[idx], &s[other]);
+                if (other <= idx) continue;
+                if (circles_intersect(&s[idx], &s[other])) {
+                    handle_collision_circle(&s[idx], &s[other]);
                 }
             }
         }
     }
 }
 
-
-
+/* Инициализация спрайтов */
+void init_sprites(void) {
+    for (int i = 0; i < SPRITE_COUNT; ++i) {
+        s[i].num = i;
+        s[i].size = SPRITE_RADIUS;
+        float r = (float)s[i].size;
+        s[i].x = randf(r, SCREEN_W - r);
+        s[i].y = randf(r, SCREEN_H - r);
+        s[i].vx = randf(-30.0f, 30.0f);
+        s[i].vy = randf(-30.0f, 30.0f);
+    }
+}
 
 
 
@@ -305,7 +281,7 @@ int main(void)
   
   
   
-      u8g2_Setup_uc1698u_cg160160(&u8g2, U8G2_R3, u8x8_byte_hw_fsmc, u8x8_gpio_and_delay_template);     
+      u8g2_Setup_uc1698u_cg160160(&u8g2, U8G2_R0, u8x8_byte_hw_fsmc, u8x8_gpio_and_delay_template);     
       u8g2_InitDisplay(&u8g2); // send init sequence to the display, display is in sleep mode after this,
       u8g2_SetPowerSave(&u8g2, 0); // wake up display
       u8g2_ClearDisplay(&u8g2);       
@@ -313,17 +289,20 @@ int main(void)
       
       
       
-      u8g2_SetFontMode(&u8g2, 0);  
+//      u8g2_SetFontMode(&u8g2, 0);  
       u8g2_SetFont(&u8g2, u8g2_font_logisoso18_tf);
-      u8g2_SetDrawColor(&u8g2, 2);
-      u8g2_SetFontMode(&u8g2, 1);
+      u8g2_SetDrawColor(&u8g2, 1);
+//      u8g2_SetFontMode(&u8g2, 1);
        
 
       u8g2_SetFlipMode(&u8g2, 0);
       
       
-      u8g2_ClearBuffer(&u8g2);      
-      u8g2_DrawXBM(&u8g2, 20, 40, 128, 64, u8g2_logo_128x64_bits);     
+      u8g2_ClearBuffer(&u8g2); 
+      
+       u8g2_DrawDisc(&u8g2, 3, 3, 3, U8G2_DRAW_ALL);
+      
+//      u8g2_DrawXBM(&u8g2, 20, 40, 128, 64, u8g2_logo_128x64_bits);     
       u8g2_SendBuffer(&u8g2);     
       
       
@@ -337,57 +316,55 @@ int main(void)
       
       HAL_Delay(DALAY_TIME);
       
+    /* Инициализация спрайтов */
   init_sprites();
-uint32_t last = uwTick;
+  uint32_t last = uwTick;
 
-while(1) {      
+    while (1) {
     uint32_t now = uwTick;
     float dt = (now - last) / 1000.0f;
     if (dt <= 0.0f) continue;
-    if (dt > 0.05f) dt = 0.05f;
+    if (dt > 0.05f) dt = 0.05f;  // ограничиваем dt для стабильности
     last = now;
 
     /* Обновление позиций и отражение от стен */
     for (int i = 0; i < SPRITE_COUNT; ++i) {
         s[i].x += s[i].vx * dt;
         s[i].y += s[i].vy * dt;
+        float r = (float)s[i].size;
 
-        if (s[i].x < 0.0f) {
-            s[i].x = -s[i].x;
+        if (s[i].x - r < 0.0f) {
+            s[i].x = r;
+            s[i].vx = -s[i].vx;
+        } else if (s[i].x + r > SCREEN_W) {
+            s[i].x = SCREEN_W - r;
             s[i].vx = -s[i].vx;
         }
-        if (s[i].x + s[i].size > SCREEN_W) {
-            float over = s[i].x + s[i].size - SCREEN_W;
-            s[i].x -= 2.0f * over;
-            s[i].vx = -s[i].vx;
-        }
-        if (s[i].y < 0.0f) {
-            s[i].y = -s[i].y;
+
+        if (s[i].y - r < 0.0f) {
+            s[i].y = r;
             s[i].vy = -s[i].vy;
-        }
-        if (s[i].y + s[i].size > SCREEN_H) {
-            float over = s[i].y + s[i].size - SCREEN_H;
-            s[i].y -= 2.0f * over;
+        } else if (s[i].y + r > SCREEN_H) {
+            s[i].y = SCREEN_H - r;
             s[i].vy = -s[i].vy;
         }
     }
 
-    /* Spatial hashing для быстрых коллизий */
+    /* Spatial hashing и обработка столкновений */
     grid_clear();
-    for (int i = 0; i < SPRITE_COUNT; ++i) {
-        grid_insert(i);
-    }
-    for (int i = 0; i < SPRITE_COUNT; ++i) {
-        grid_check_collisions(i);
-    }
+    for (int i = 0; i < SPRITE_COUNT; ++i) grid_insert(i);
+    for (int i = 0; i < SPRITE_COUNT; ++i) grid_check_collisions(i);
 
     /* Отрисовка */
     u8g2_ClearBuffer(&u8g2);
     for (int i = 0; i < SPRITE_COUNT; ++i) {
-        Display_DrawSquare((int)s[i].x, (int)s[i].y, s[i].size, s[i].num);
+        int cx = (int)roundf(s[i].x);
+        int cy = (int)roundf(s[i].y);
+        u8g2_DrawDisc(&u8g2, cx, cy, s[i].size, U8G2_DRAW_ALL);
     }
     u8g2_SendBuffer(&u8g2);
-}
+  }
+
 
     
   /* USER CODE END 2 */
